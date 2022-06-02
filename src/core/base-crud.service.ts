@@ -1,55 +1,73 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { AuditBaseEntity } from './audit-base.entity';
+import { ILike, Repository, SelectQueryBuilder } from 'typeorm';
+import * as helper from '../core/helper';
 
 @Injectable()
-export class BaseCrudService<T extends AuditBaseEntity> {
-  private entity: { new (): T };
-  constructor(private repositoty: Repository<T>) {
-    console.log(this.entity);
-  }
+export class BaseCrudService<T> {
+  constructor(private repositoty: Repository<T>, private alias: string) {}
 
-  async create(createDto: any) {
-    console.log(new this.entity());
-    const data = {
-      ...new this.entity(),
-      ...createDto,
-    };
-    console.log(data);
-    const result = await this.repositoty.save(data);
+  async create(entity: any) {
+    const result = await this.repositoty.save(entity);
     return result;
   }
 
-  findAll() {
-    return this.repositoty.find();
+  async update(id: number, patch: any) {
+    const existing = await this.repositoty.findOneOrFail(id);
+    const entity = {
+      ...existing,
+      ...patch,
+    };
+    return this.repositoty.save(entity);
   }
 
-  paginate({ page, per_page, search, columns }) {
-    const skip = ((page || 1) - 1) * (per_page || 10);
+  findAll({ search = {}, columns = undefined, limit = 100 }) {
+    const query = this.allQuery({ search, columns });
 
-    const query = this.repositoty.createQueryBuilder('u');
+    query.limit(limit);
 
-    query.select('first_name');
+    return query.getMany();
+  }
 
-    query.skip(skip);
+  async query({ page, perPage, search, columns }) {
+    const query = this.allQuery({ search, columns });
 
-    query.take(per_page);
+    query.where(search);
 
-    return query.getManyAndCount();
+    query.skip(helper.getSkip(page, perPage));
+
+    query.take(perPage);
+
+    const result = await query.getManyAndCount();
+
+    return result;
+  }
+
+  private allQuery({ search, columns }): SelectQueryBuilder<T> {
+    const query = this.repositoty.createQueryBuilder(this.alias);
+
+    if (columns) {
+      const select = [];
+      columns.split(',').forEach((c: string) => {
+        if (c.includes('.')) {
+          select.push(c);
+        } else {
+          select.push(`${this.alias}.${c}`);
+        }
+      });
+      query.select(select);
+    }
+
+    Object.keys(search).forEach((key) => {
+      search[key] = ILike(`%${search[key].toLowerCase()}%`);
+    });
+    query.where(search);
+
+    return query;
   }
 
   findOne(id: number) {
     return this.repositoty.findOne(id);
   }
-
-  // async update(id: number, updateDto: any) {
-  //   let entity = await this.repositoty.findOne(id);
-  //   entity = {
-  //     ...entity,
-  //     ...updateDto,
-  //   };
-  //   return this.repositoty.save(entity);
-  // }
 
   remove(id: number) {
     return this.repositoty.delete(id);

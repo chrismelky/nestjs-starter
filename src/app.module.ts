@@ -7,6 +7,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { ErrorHandlerFilter } from './error-handler.filter';
 import { getConnectionOptions } from 'typeorm';
 import { UserModule } from './modules/user/user.module';
+import { RoleModule } from './modules/role/role.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UserModule } from './modules/user/user.module';
         }),
     }),
     UserModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [

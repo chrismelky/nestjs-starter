@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import * as helper from '../../core/helper';
@@ -20,15 +19,12 @@ export class UserService {
       ...createUserDto,
       password: await bcrypt.hash('Secret1234', 10),
     };
-    return this.usersRepository.save(data);
+    const result = await this.usersRepository.save(data);
+    return result;
   }
 
-  findAll() {
-    return this.usersRepository.find();
-  }
-
-  async paginate({ page, perPage, search, columns }) {
-    const query = this.usersRepository.createQueryBuilder('user');
+  async query({ page, perPage, search, columns }) {
+    const query = this.usersRepository.createQueryBuilder('users');
 
     if (columns) {
       const select = [];
@@ -36,12 +32,15 @@ export class UserService {
         if (c.includes('.')) {
           select.push(c);
         } else {
-          select.push(`user.${c}`);
+          select.push(`users.${c}`);
         }
       });
       query.select(select);
     }
-    //TODO handle where with string
+
+    Object.keys(search).forEach((key) => {
+      search[key] = ILike(`%${search[key].toLowerCase()}%`);
+    });
     query.where(search);
 
     query.skip(helper.getSkip(page, perPage));
@@ -57,16 +56,21 @@ export class UserService {
     return this.usersRepository.findOne(id);
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    let user = await this.usersRepository.findOne(id);
-    user = {
-      ...user,
-      ...updateUserDto,
+  async update(id: number, patch: any) {
+    const existingUser = await this.usersRepository.findOneOrFail(id);
+    const user = {
+      ...existingUser,
+      ...patch,
     };
     return this.usersRepository.save(user);
   }
 
-  remove(id: number) {
+  async remove(id: number) {
+    await this.usersRepository.findOneOrFail(id);
     return this.usersRepository.delete(id);
+  }
+
+  findOneByEmail(email: string): Promise<any> {
+    return this.usersRepository.findOne({ where: { email } });
   }
 }

@@ -7,13 +7,14 @@ import {
   Delete,
   Put,
   Query,
+  HttpException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { BaseController } from '../../core/base.controller';
 import { QueryOption } from 'src/core/query-params';
-import * as bcrypt from 'bcrypt';
+import { User } from './user.entity';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { validate } from 'class-validator';
 
 @Controller('api/users')
 export class UserController extends BaseController {
@@ -22,51 +23,45 @@ export class UserController extends BaseController {
   }
 
   @Post()
-  async create(@Body() createUserDto: any) {
-    const data = {
-      ...createUserDto,
-      password: await bcrypt.hash('Secret1234', 10),
-    };
-    const result = this.userService.create(data);
+  async create(@Body() createUserDto: User) {
+    await validate(createUserDto);
+    const result = await this.userService.create(createUserDto);
     return this.sendResponse({
       result,
       message: 'User created successfully',
     });
   }
 
-  @Get()
-  async findAll(@Query() query: QueryOption) {
-    const { page, perPage, columns, ...search } = query;
-
-    console.log(search);
-    if (query.page) {
-      const [result, count] = await this.userService.paginate({
-        page,
-        perPage,
-        search,
-        columns,
-      });
-      return this.sendResponse({ result, count, page, perPage });
-    } else {
-      const result = await this.userService.findAll();
-      return this.sendResponse({ result });
+  @Put(':id')
+  async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
+    if (updateUserDto.id !== +id) {
+      throw new HttpException('Invalid Request', 400);
     }
+    const result = await this.userService.update(+id, updateUserDto);
+    return this.sendResponse({ result, message: 'User updated successfully' });
+  }
+
+  @Get()
+  async query(@Query() query: QueryOption) {
+    const { page = 1, perPage = 10, columns, ...search } = query;
+    const [result, count] = await this.userService.query({
+      page,
+      perPage,
+      search,
+      columns,
+    });
+    return this.sendResponse({ result, count, page, perPage });
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.sendResponse(this.userService.findOne(+id));
+    const result = await this.userService.findOne(+id);
+    return this.sendResponse({ result });
   }
 
-  // @Put(':id')
-  // async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   const result = this.userService.update(+id, updateUserDto);
-  //   return this.sendResponse({ result, message: 'User updated successfully' });
-  // }
-
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    this.userService.remove(+id);
+  async remove(@Param('id') id: string) {
+    await this.userService.remove(+id);
     return this.sendMessage('User deleted successfully');
   }
 }

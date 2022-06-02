@@ -4,16 +4,16 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { QueryFailedError } from 'typeorm';
 
 @Catch()
 export class ErrorHandlerFilter implements ExceptionFilter {
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
-  catch(exception: unknown, host: ArgumentsHost): void {
-    // In certain situations `httpAdapter` might not be available in the
-    // constructor method, thus we should resolve it here.
+  catch(exception: any, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
 
     const ctx = host.switchToHttp();
@@ -23,12 +23,23 @@ export class ErrorHandlerFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
+    console.error(exception);
+    let message: any = exception.message;
+    if (exception instanceof BadRequestException) {
+      message = exception.getResponse()['message'];
+    }
+
+    if (exception instanceof QueryFailedError) {
+      message =
+        exception.driverError.code === '23505'
+          ? exception.driverError.detail
+          : exception.message;
+    }
+
     const responseBody = {
       statusCode: httpStatus,
-      timestamp: new Date().toISOString(),
-      path: httpAdapter.getRequestUrl(ctx.getRequest()),
+      message,
     };
-    console.log(exception);
 
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
