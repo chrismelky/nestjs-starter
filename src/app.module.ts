@@ -3,11 +3,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { logger } from './logger.middleware';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ErrorHandlerFilter } from './error-handler.filter';
 import { getConnectionOptions } from 'typeorm';
 import { UserModule } from './modules/user/user.module';
 import { RoleModule } from './modules/role/role.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtGuard } from './auth/jwt.guard';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { RoleModule } from './modules/role/role.module';
     }),
     UserModule,
     RoleModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
@@ -26,6 +29,10 @@ import { RoleModule } from './modules/role/role.module';
     {
       provide: APP_FILTER,
       useClass: ErrorHandlerFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtGuard,
     },
   ],
 })

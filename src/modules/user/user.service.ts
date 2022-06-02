@@ -70,7 +70,7 @@ export class UserService {
     return this.usersRepository.delete(id);
   }
 
-  findOneByEmail(email: string): Promise<any> {
+  findOneByEmail(email: string): Promise<User | undefined> {
     return this.usersRepository.findOne({ where: { email } });
   }
 }
