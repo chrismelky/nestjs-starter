@@ -27,7 +27,7 @@ export class UserService {
     const query = this.usersRepository.createQueryBuilder('users');
 
     if (columns) {
-      const select = [];
+      const select = ['users.id', 'roles.id', 'roles.name'];
       columns.split(',').forEach((c: string) => {
         if (c.includes('.')) {
           select.push(c);
@@ -37,6 +37,8 @@ export class UserService {
       });
       query.select(select);
     }
+
+    query.leftJoin('users.roles', 'roles');
 
     Object.keys(search).forEach((key) => {
       search[key] = ILike(`%${search[key].toLowerCase()}%`);

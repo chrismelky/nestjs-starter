@@ -10,12 +10,12 @@ export abstract class AuditBaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'uuid' })
-  uuid: string = randomUUID();
+  @Column({ name: 'uuid', default: randomUUID() })
+  uuid: string;
 
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  @Column({ name: 'created_by' })
-  createdBy: string = 'system';
+  @Column({ name: 'created_by', default: 'system' })
+  createdBy: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
