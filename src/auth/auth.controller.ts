@@ -3,7 +3,7 @@ import { Public } from 'src/core/public.annotation';
 import { AuthService } from './auth.service';
 import { LoginGuard } from './login.guard';
 
-@Controller('auth')
+@Controller('api/auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 

@@ -34,7 +34,7 @@ export class AuthService {
     //TODO get menus,
     const menus = [];
     return {
-      access_token: this.jwtService.sign(jwtpayload),
+      access_token: this.jwtService.sign(jwtpayload, { expiresIn: 3600 }),
       user,
       menus,
     };

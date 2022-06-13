@@ -23,11 +23,13 @@ export class UserService {
     return result;
   }
 
-  async query({ page, perPage, search, columns }) {
+  async query({ page, perPage, search, columns, sortField, sortOrder }) {
     const query = this.usersRepository.createQueryBuilder('users');
 
+    let select = ['users', 'roles.id', 'roles.name'];
+
     if (columns) {
-      const select = ['users.id', 'roles.id', 'roles.name'];
+      select = ['users.id', 'roles.id', 'roles.name'];
       columns.split(',').forEach((c: string) => {
         if (c.includes('.')) {
           select.push(c);
@@ -35,8 +37,9 @@ export class UserService {
           select.push(`users.${c}`);
         }
       });
-      query.select(select);
     }
+
+    query.select(select);
 
     query.leftJoin('users.roles', 'roles');
 
@@ -48,6 +51,10 @@ export class UserService {
     query.skip(helper.getSkip(page, perPage));
 
     query.take(perPage);
+
+    if (sortField !== undefined) {
+      query.orderBy(`users.${sortField}`, sortOrder || 'ASC');
+    }
 
     const result = await query.getManyAndCount();
 

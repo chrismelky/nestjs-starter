@@ -14,6 +14,7 @@ import { Role } from './role.entity';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { validate } from 'class-validator';
 import { QueryOption } from 'src/core/query-params';
+import { Public } from 'src/core/public.annotation';
 
 @Controller('api/roles')
 export class RoleController extends BaseController {
@@ -39,6 +40,7 @@ export class RoleController extends BaseController {
   }
 
   @Get()
+  @Public()
   async findAll(@Query() query: QueryOption) {
     const { page, perPage, columns, ...search } = query;
 

@@ -7,8 +7,8 @@ import {
   Delete,
   Put,
   Query,
-  Request,
   HttpException,
+  Request,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { BaseController } from '../../core/base.controller';
@@ -45,12 +45,21 @@ export class UserController extends BaseController {
   @Get()
   async query(@Query() query: QueryOption, @Request() req) {
     console.log(req.user);
-    const { page = 1, perPage = 10, columns, ...search } = query;
+    const {
+      page = 1,
+      perPage = 30,
+      columns,
+      sortField,
+      sortOrder,
+      ...search
+    } = query;
     const [result, count] = await this.userService.query({
       page,
       perPage,
       search,
       columns,
+      sortField,
+      sortOrder,
     });
     return this.sendResponse({ result, count, page, perPage });
   }
