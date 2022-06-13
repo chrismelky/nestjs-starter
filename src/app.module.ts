@@ -10,6 +10,7 @@ import { UserModule } from './modules/user/user.module';
 import { RoleModule } from './modules/role/role.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtGuard } from './auth/jwt.guard';
+import { AuthorityGuard } from './auth/authority.guard';
 
 @Module({
   imports: [
@@ -33,6 +34,10 @@ import { JwtGuard } from './auth/jwt.guard';
     {
       provide: APP_GUARD,
       useClass: JwtGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AuthorityGuard,
     },
   ],
 })
