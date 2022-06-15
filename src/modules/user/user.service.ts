@@ -1,85 +1,68 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
-import * as helper from '../../core/helper';
+import { BaseCrudService } from '../../core/base-crud.service';
 
 @Injectable()
-export class UserService {
+export class UserService extends BaseCrudService<User> {
+  alias = 'users';
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
-  ) {}
+    public repository: Repository<User>,
+  ) {
+    super();
+  }
 
+  /**
+   * Override create method to add default password to new user
+   */
   async create(createUserDto: CreateUserDto) {
     const data = {
       ...new User(),
       ...createUserDto,
       password: await bcrypt.hash('Secret1234', 10),
     };
-    const result = await this.usersRepository.save(data);
+    const result = await this.repository.save(data);
     return result;
-  }
-
-  async query({ page, perPage, search, columns, sortField, sortOrder }) {
-    const query = this.usersRepository.createQueryBuilder('users');
-
-    let select = ['users', 'roles.id', 'roles.name'];
-
-    if (columns) {
-      select = ['users.id', 'roles.id', 'roles.name'];
-      columns.split(',').forEach((c: string) => {
-        if (c.includes('.')) {
-          select.push(c);
-        } else {
-          select.push(`users.${c}`);
-        }
-      });
-    }
-
-    query.select(select);
-
-    query.leftJoin('users.roles', 'roles');
-
-    Object.keys(search).forEach((key) => {
-      search[key] = ILike(`%${search[key].toLowerCase()}%`);
-    });
-    query.where(search);
-
-    query.skip(helper.getSkip(page, perPage));
-
-    query.take(perPage);
-
-    if (sortField !== undefined) {
-      query.orderBy(`users.${sortField}`, sortOrder || 'ASC');
-    }
-
-    const result = await query.getManyAndCount();
-
-    return result;
-  }
-
-  findOne(id: number) {
-    return this.usersRepository.findOne(id);
   }
 
   async update(id: number, patch: any) {
-    const existingUser = await this.usersRepository.findOneOrFail(id);
-    const user = {
-      ...existingUser,
+    const existing = await this.repository.findOneByOrFail({ id });
+    const entity = {
+      ...existing,
       ...patch,
     };
-    return this.usersRepository.save(user);
+    return this.repository.save(entity);
   }
 
-  async remove(id: number) {
-    await this.usersRepository.findOneOrFail(id);
-    return this.usersRepository.delete(id);
+  /**
+   * Override pagination method to add eager laoded user roles
+   */
+  async paginate({ page, perPage, search, columns, sortField, sortOrder }) {
+    const query = this.pageQuery({
+      page,
+      perPage,
+      search,
+      columns,
+      sortField,
+      sortOrder,
+    });
+
+    query.addSelect(['roles.id', 'roles.name']);
+    query.leftJoin('users.roles', 'roles');
+    const result = await query.getManyAndCount();
+    return result;
+  }
+
+  async delete(id: number) {
+    await this.repository.findOneByOrFail({ id });
+    return this.repository.delete(id);
   }
 
   findOneByEmail(email: string): Promise<User | undefined> {
-    return this.usersRepository.findOne({ where: { email } });
+    return this.repository.findOne({ where: { email } });
   }
 }

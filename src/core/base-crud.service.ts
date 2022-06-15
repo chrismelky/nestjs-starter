@@ -1,37 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { ILike, Repository, SelectQueryBuilder } from 'typeorm';
 import * as helper from '../core/helper';
+import { AuditBaseEntity } from './audit-base.entity';
 
 @Injectable()
-export class BaseCrudService<T> {
-  constructor(private repositoty: Repository<T>, private alias: string) {}
+export abstract class BaseCrudService<T extends AuditBaseEntity> {
+  repository: Repository<T>;
 
-  async create(entity: any) {
-    const result = await this.repositoty.save(entity);
+  alias: string;
+
+  async create(entity: T) {
+    const result = await this.repository.save(entity);
     return result;
   }
 
-  async update(id: number, patch: any) {
-    const existing = await this.repositoty.findOneOrFail(id);
-    const entity = {
-      ...existing,
-      ...patch,
-    };
-    return this.repositoty.save(entity);
-  }
-
-  findAll({ search = {}, columns = undefined, limit = 100 }) {
-    const query = this.allQuery({ search, columns });
+  findAll({
+    search = {},
+    columns = undefined,
+    limit = 100,
+    sortField = undefined,
+    sortOrder = 'ASC',
+  }) {
+    const query = this.allQuery({ search, columns, sortField, sortOrder });
 
     query.limit(limit);
 
     return query.getMany();
   }
 
-  async query({ page, perPage, search, columns }) {
-    const query = this.allQuery({ search, columns });
-
-    query.where(search);
+  async paginate({
+    page,
+    perPage,
+    search,
+    columns,
+    sortField = undefined,
+    sortOrder = 'ASC',
+  }) {
+    const query = this.allQuery({ search, columns, sortField, sortOrder });
 
     query.skip(helper.getSkip(page, perPage));
 
@@ -42,34 +47,50 @@ export class BaseCrudService<T> {
     return result;
   }
 
-  private allQuery({ search, columns }): SelectQueryBuilder<T> {
-    const query = this.repositoty.createQueryBuilder(this.alias);
+  pageQuery({
+    page,
+    perPage,
+    search,
+    columns,
+    sortField = undefined,
+    sortOrder = 'ASC',
+  }) {
+    const query = this.allQuery({ search, columns, sortField, sortOrder });
+
+    query.skip(helper.getSkip(page, perPage));
+
+    query.take(perPage);
+
+    return query;
+  }
+
+  allQuery({
+    search,
+    columns,
+    sortField = undefined,
+    sortOrder = 'ASC',
+  }: any): SelectQueryBuilder<T> {
+    const query = this.repository.createQueryBuilder(this.alias);
+
+    let select = [`${this.alias}`];
 
     if (columns) {
-      const select = [];
-      columns.split(',').forEach((c: string) => {
-        if (c.includes('.')) {
-          select.push(c);
-        } else {
-          select.push(`${this.alias}.${c}`);
-        }
-      });
-      query.select(select);
+      select = [];
+      columns
+        .split(',')
+        .forEach((c: string) => select.push(`${this.alias}.${c}`));
     }
+    query.select(select);
 
     Object.keys(search).forEach((key) => {
       search[key] = ILike(`%${search[key].toLowerCase()}%`);
     });
     query.where(search);
 
+    if (sortField !== undefined) {
+      query.orderBy(`${this.alias}.${sortField}`, sortOrder);
+    }
+
     return query;
-  }
-
-  findOne(id: number) {
-    return this.repositoty.findOne(id);
-  }
-
-  remove(id: number) {
-    return this.repositoty.delete(id);
   }
 }

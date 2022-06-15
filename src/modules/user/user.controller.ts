@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { BaseController } from '../../core/base.controller';
-import { QueryOption } from 'src/core/query-params';
+import { QueryOption } from '../../core/query-params';
 import { User } from './user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { validate } from 'class-validator';
@@ -51,7 +51,7 @@ export class UserController extends BaseController {
       sortOrder,
       ...search
     } = query;
-    const [result, count] = await this.userService.query({
+    const [result, count] = await this.userService.paginate({
       page,
       perPage,
       search,
@@ -62,15 +62,9 @@ export class UserController extends BaseController {
     return this.sendResponse({ result, count, page, perPage });
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const result = await this.userService.findOne(+id);
-    return this.sendResponse({ result });
-  }
-
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    await this.userService.remove(+id);
+  async delete(@Param('id') id: string) {
+    await this.userService.delete(+id);
     return this.sendMessage('User deleted successfully');
   }
 }

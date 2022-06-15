@@ -8,13 +8,14 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { RoleService } from './role.service';
-import { BaseController } from 'src/core/base.controller';
-import { Role } from './role.entity';
-import { UpdateRoleDto } from './dto/update-role.dto';
+import { BaseController } from '../../core/base.controller';
 import { validate } from 'class-validator';
-import { QueryOption } from 'src/core/query-params';
-import { Public } from 'src/core/public.annotation';
+import { QueryOption } from '../../core/query-params';
+import { Public } from '../../core/public.annotation';
+import { RoleService } from './role.service';
+import { CreateRoleDto } from './dto/create-role.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
+import { Role } from './role.entity';
 
 @Controller('api/roles')
 export class RoleController extends BaseController {
@@ -23,7 +24,7 @@ export class RoleController extends BaseController {
   }
 
   @Post()
-  async create(@Body() roleDto: Role) {
+  async create(@Body() roleDto: CreateRoleDto) {
     const data = {
       ...new Role(),
       ...roleDto,
@@ -41,15 +42,17 @@ export class RoleController extends BaseController {
 
   @Get()
   @Public()
-  async findAll(@Query() query: QueryOption) {
-    const { page, perPage, columns, ...search } = query;
+  async read(@Query() query: QueryOption) {
+    const { page, perPage, columns, sortField, sortOrder, ...search } = query;
 
     if (page) {
-      const [result, count] = await this.roleService.query({
+      const [result, count] = await this.roleService.paginate({
         page,
         perPage,
         search,
         columns,
+        sortField,
+        sortOrder,
       });
       return this.sendResponse({ result, count, page, perPage });
     }

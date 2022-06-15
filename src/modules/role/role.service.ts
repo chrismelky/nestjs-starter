@@ -1,15 +1,61 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseCrudService } from 'src/core/base-crud.service';
+import { BaseCrudService } from '../../core/base-crud.service';
 import { Repository } from 'typeorm';
 import { Role } from './role.entity';
 
 @Injectable()
 export class RoleService extends BaseCrudService<Role> {
+  alias = 'roles';
+
   constructor(
     @InjectRepository(Role)
-    private roleRepository: Repository<Role>,
+    public repository: Repository<Role>,
   ) {
-    super(roleRepository, 'role');
+    super();
+  }
+
+  /**
+   * Override pagination to add eager loaded authorities
+   */
+  async paginate({
+    page,
+    perPage,
+    search,
+    columns,
+    sortField = undefined,
+    sortOrder = 'ASC',
+  }: any) {
+    const query = this.pageQuery({
+      page,
+      perPage,
+      search,
+      columns,
+      sortField,
+      sortOrder,
+    });
+    query.addSelect(['authorities.id', 'authorities.name']);
+    query.leftJoin('roles.authorities', 'authorities');
+    const result = await query.getManyAndCount();
+    return result;
+  }
+
+  async update(id: number, patch: any) {
+    const existing = await this.repository.findOneByOrFail({ id });
+    const entity = {
+      ...existing,
+      ...patch,
+    };
+    return this.repository.save(entity);
+  }
+
+  async findOne(id: number) {
+    const role = await this.repository.findOneBy({ id });
+    return role;
+  }
+
+  async remove(id: number) {
+    await this.repository.findOneByOrFail({ id });
+    return this.repository.delete(id);
   }
 }

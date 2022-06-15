@@ -1,5 +1,5 @@
 import { Controller, Post, UseGuards, Request } from '@nestjs/common';
-import { Public } from 'src/core/public.annotation';
+import { Public } from '../core/public.annotation';
 import { AuthService } from './auth.service';
 import { LoginGuard } from './login.guard';
 
