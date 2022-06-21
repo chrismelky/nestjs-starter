@@ -18,6 +18,7 @@ describe('RoleController', () => {
           useValue: {
             findAll: jest.fn().mockResolvedValue([]),
             save: jest.fn().mockResolvedValue({}),
+            update: jest.fn().mockResolvedValue({}),
           },
         },
       ],
@@ -39,14 +40,14 @@ describe('RoleController', () => {
 
   it('should find all', async () => {
     jest.spyOn(service, 'findAll').mockResolvedValue([]);
-    return controller.read({}).then(({ data }) => {
+    return controller.fetch({}).then(({ data }) => {
       expect(data).toBeDefined();
     });
   });
 
   it('should paginate', async () => {
     jest.spyOn(service, 'paginate').mockResolvedValue([[], 1]);
-    return controller.read({ page: 1 }).then(({ data, total }) => {
+    return controller.fetch({ page: 1 }).then(({ data, total }) => {
       expect(data).toBeDefined();
       expect(total).toBeDefined();
     });

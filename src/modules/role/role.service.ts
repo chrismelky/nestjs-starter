@@ -20,7 +20,7 @@ export class RoleService extends BaseCrudService<Role> {
    */
   async paginate({
     page,
-    perPage,
+    size,
     search,
     columns,
     sortField = undefined,
@@ -28,7 +28,7 @@ export class RoleService extends BaseCrudService<Role> {
   }: any) {
     const query = this.pageQuery({
       page,
-      perPage,
+      size,
       search,
       columns,
       sortField,
@@ -38,15 +38,6 @@ export class RoleService extends BaseCrudService<Role> {
     query.leftJoin('roles.authorities', 'authorities');
     const result = await query.getManyAndCount();
     return result;
-  }
-
-  async update(id: number, patch: any) {
-    const existing = await this.repository.findOneByOrFail({ id });
-    const entity = {
-      ...existing,
-      ...patch,
-    };
-    return this.repository.save(entity);
   }
 
   async findOne(id: number) {

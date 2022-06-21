@@ -4,7 +4,7 @@ export abstract class BaseController {
       return {
         data: response.result,
         page: +response.page,
-        perPage: +response.perPage,
+        size: +response.size,
         total: response.count,
         message: response.message,
       };

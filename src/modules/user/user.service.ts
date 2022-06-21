@@ -29,22 +29,13 @@ export class UserService extends BaseCrudService<User> {
     return result;
   }
 
-  async update(id: number, patch: any) {
-    const existing = await this.repository.findOneByOrFail({ id });
-    const entity = {
-      ...existing,
-      ...patch,
-    };
-    return this.repository.save(entity);
-  }
-
   /**
    * Override pagination method to add eager laoded user roles
    */
-  async paginate({ page, perPage, search, columns, sortField, sortOrder }) {
+  async paginate({ page, size, search, columns, sortField, sortOrder }) {
     const query = this.pageQuery({
       page,
-      perPage,
+      size,
       search,
       columns,
       sortField,

@@ -9,9 +9,12 @@ export abstract class BaseCrudService<T extends AuditBaseEntity> {
 
   alias: string;
 
-  async create(entity: T) {
-    const result = await this.repository.save(entity);
-    return result;
+  create(entity: T) {
+    return this.repository.save(entity);
+  }
+
+  update(id: number, patch: any) {
+    return this.repository.update(id, { ...patch });
   }
 
   findAll({
@@ -30,7 +33,7 @@ export abstract class BaseCrudService<T extends AuditBaseEntity> {
 
   async paginate({
     page,
-    perPage,
+    size,
     search,
     columns,
     sortField = undefined,
@@ -38,9 +41,9 @@ export abstract class BaseCrudService<T extends AuditBaseEntity> {
   }) {
     const query = this.allQuery({ search, columns, sortField, sortOrder });
 
-    query.skip(helper.getSkip(page, perPage));
+    query.skip(helper.getSkip(page, size));
 
-    query.take(perPage);
+    query.take(size);
 
     const result = await query.getManyAndCount();
 
@@ -49,7 +52,7 @@ export abstract class BaseCrudService<T extends AuditBaseEntity> {
 
   pageQuery({
     page,
-    perPage,
+    size,
     search,
     columns,
     sortField = undefined,
@@ -57,9 +60,9 @@ export abstract class BaseCrudService<T extends AuditBaseEntity> {
   }) {
     const query = this.allQuery({ search, columns, sortField, sortOrder });
 
-    query.skip(helper.getSkip(page, perPage));
+    query.skip(helper.getSkip(page, size));
 
-    query.take(perPage);
+    query.take(size);
 
     return query;
   }

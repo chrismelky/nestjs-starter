@@ -31,16 +31,16 @@ describe('Role E2E test', () => {
       });
   });
 
-  it('Update [PUT] /roles', () => {
+  it('Update [PATCH] /roles', async () => {
     const newName = 'New role name';
     return request(app.getHttpServer())
-      .put('/api/roles/1')
+      .patch('/api/roles/1')
       .send({
-        ...role,
         name: newName,
       })
       .expect(200)
       .then(({ body }) => {
+        expect(body.data).toBeDefined();
         expect(body.data.name).toEqual(newName);
       });
   });

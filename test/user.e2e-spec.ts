@@ -36,6 +36,20 @@ describe('User module', () => {
       });
   });
 
+  it('Should update user', async () => {
+    const newFirstName = 'New first name';
+    return request(app.getHttpServer())
+      .patch('/api/users/1')
+      .send({
+        firstName: newFirstName,
+      })
+      .expect(200)
+      .then(({ body }) => {
+        expect(body.data).toBeDefined();
+        expect(body.data.firstName).toEqual(newFirstName);
+      });
+  });
+
   it('Should fetch users', async () => {
     return request(server)
       .get('/api/users')

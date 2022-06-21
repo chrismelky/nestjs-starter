@@ -1,8 +1,8 @@
-export class QueryOption {
+export class QueryParams {
   constructor(
     public columns?: string,
     public page?: number,
-    public perPage?: number,
+    public size?: number,
     public sortField?: string,
     public sortOrder?: string,
   ) {}

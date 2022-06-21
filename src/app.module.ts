@@ -11,6 +11,7 @@ import { RoleModule } from './modules/role/role.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtGuard } from './auth/jwt.guard';
 import { AuthorityGuard } from './auth/authority.guard';
+import { MenuModule } from './modules/menu/menu.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AuthorityGuard } from './auth/authority.guard';
     UserModule,
     RoleModule,
     AuthModule,
+    MenuModule,
   ],
   controllers: [AppController],
   providers: [

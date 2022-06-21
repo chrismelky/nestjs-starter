@@ -1,3 +1,3 @@
-export function getSkip(page: number, perPage: number) {
-  return ((page || 1) - 1) * (perPage || 10);
+export function getSkip(page: number, size: number) {
+  return ((page || 1) - 1) * (size || 10);
 }

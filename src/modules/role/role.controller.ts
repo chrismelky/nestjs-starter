@@ -5,12 +5,12 @@ import {
   Body,
   Param,
   Delete,
-  Put,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { BaseController } from '../../core/base.controller';
 import { validate } from 'class-validator';
-import { QueryOption } from '../../core/query-params';
+import { QueryParams } from '../../core/query-params';
 import { Public } from '../../core/public.annotation';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
@@ -23,40 +23,54 @@ export class RoleController extends BaseController {
     super();
   }
 
-  @Post()
-  async create(@Body() roleDto: CreateRoleDto) {
-    const data = {
-      ...new Role(),
-      ...roleDto,
-    };
-    await validate(data);
-    const result = await this.roleService.create(data);
-    return this.sendResponse({ result });
-  }
-
-  @Put(':id')
-  async update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    const result = await this.roleService.update(+id, updateRoleDto);
-    return this.sendResponse({ result });
-  }
-
   @Get()
   @Public()
-  async read(@Query() query: QueryOption) {
-    const { page, perPage, columns, sortField, sortOrder, ...search } = query;
+  async fetch(@Query() query: QueryParams) {
+    const { page, size, columns, sortField, sortOrder, ...search } = query;
 
     if (page) {
       const [result, count] = await this.roleService.paginate({
         page,
-        perPage,
+        size,
         search,
         columns,
         sortField,
         sortOrder,
       });
-      return this.sendResponse({ result, count, page, perPage });
+      return this.sendResponse({
+        result,
+        count,
+        page,
+        size,
+        sortField,
+        sortOrder,
+      });
+    } else {
+      const result = await this.roleService.findAll({
+        columns,
+        search,
+        sortField,
+        sortOrder,
+      });
+      return this.sendResponse({ result });
     }
-    const result = await this.roleService.findAll({ columns, search });
+  }
+
+  @Post()
+  async create(@Body() roleDto: CreateRoleDto) {
+    await validate(roleDto);
+    const data = {
+      ...new Role(),
+      ...roleDto,
+    };
+    const result = await this.roleService.create(data);
+    return this.sendResponse({ result });
+  }
+
+  @Patch(':id')
+  async update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
+    await this.roleService.update(+id, updateRoleDto);
+    const result = await this.roleService.repository.findOneBy({ id: +id });
     return this.sendResponse({ result });
   }
 
