@@ -69,8 +69,9 @@ export class RoleController extends BaseController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    await this.roleService.update(+id, updateRoleDto);
-    const result = await this.roleService.repository.findOneBy({ id: +id });
+    const role = await this.roleService.repository.findOneByOrFail({ id: +id });
+    Object.assign(role, updateRoleDto);
+    const result = await this.roleService.update(role);
     return this.sendResponse({ result });
   }
 

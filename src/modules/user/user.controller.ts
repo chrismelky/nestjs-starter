@@ -6,7 +6,6 @@ import {
   Param,
   Delete,
   Query,
-  HttpException,
   Patch,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -55,8 +54,9 @@ export class UserController extends BaseController {
 
   @Patch(':id')
   async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
-    await this.userService.update(+id, updateUserDto);
-    const result = await this.userService.repository.findOneBy({ id });
+    const user = await this.userService.repository.findOneByOrFail({ id });
+    Object.assign(user, updateUserDto);
+    const result = await this.userService.update(user);
     return this.sendResponse({ result, message: 'User updated successfully' });
   }
 

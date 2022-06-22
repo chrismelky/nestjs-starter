@@ -13,8 +13,11 @@ export abstract class BaseCrudService<T extends AuditBaseEntity> {
     return this.repository.save(entity);
   }
 
-  update(id: number, patch: any) {
-    return this.repository.update(id, { ...patch });
+  update(entity: T) {
+    if (!entity.id) {
+      throw new Error('Update must have id');
+    }
+    return this.repository.save(entity);
   }
 
   findAll({

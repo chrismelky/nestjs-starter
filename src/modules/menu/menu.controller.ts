@@ -38,8 +38,9 @@ export class MenuController extends BaseController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateMenuDto: UpdateMenuDto) {
-    await this.menuService.update(+id, updateMenuDto);
-    const result = this.menuService.repository.findOneBy({ id: +id });
+    const menu = await this.menuService.repository.findOneByOrFail({ id: +id });
+    Object.assign(menu, updateMenuDto);
+    const result = await this.menuService.update(menu);
     return this.sendResponse({ result });
   }
 
