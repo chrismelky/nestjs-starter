@@ -33,13 +33,13 @@ describe('RoleController', () => {
   });
 
   it('should create role', async () => {
-    return controller.create({}).then(({ data }) => {
+    return controller.create(new Role()).then(({ data }) => {
       expect(data).toBeDefined();
     });
   });
 
   it('should find all', async () => {
-    jest.spyOn(service, 'findAll').mockResolvedValue([]);
+    jest.spyOn(service, 'getAll').mockResolvedValue([]);
     return controller.fetch({}).then(({ data }) => {
       expect(data).toBeDefined();
     });

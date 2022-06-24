@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty } from 'class-validator';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
-import { AuditBaseEntity } from '../../core/audit-base.entity';
+import { AuditBaseEntity } from '../base/audit-base.entity';
 import { Role } from '../role/role.entity';
 
 @Entity('users')

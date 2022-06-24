@@ -5,5 +5,6 @@ export class QueryParams {
     public size?: number,
     public sortField?: string,
     public sortOrder?: string,
+    public search?: any,
   ) {}
 }

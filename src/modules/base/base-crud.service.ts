@@ -1,32 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import { ILike, Repository, SelectQueryBuilder } from 'typeorm';
-import * as helper from '../core/helper';
+import * as helper from '../../core/helper';
 import { AuditBaseEntity } from './audit-base.entity';
+import { IBaseService } from './IBase.service';
 
 @Injectable()
-export abstract class BaseCrudService<T extends AuditBaseEntity> {
-  repository: Repository<T>;
+export abstract class BaseCrudService<T extends AuditBaseEntity>
+  implements IBaseService<T>
+{
+  constructor(private genericRepository: Repository<any>) {}
 
-  alias: string;
+  alias = 'root';
 
-  create(entity: T) {
-    return this.repository.save(entity);
+  create(entity: T): Promise<T> {
+    return this.genericRepository.save(entity);
   }
 
-  update(entity: T) {
-    if (!entity.id) {
-      throw new Error('Update must have id');
-    }
-    return this.repository.save(entity);
+  async update(id: number, patch: any): Promise<T> {
+    const retrievedEntity = await this.genericRepository.findOneByOrFail({
+      id,
+    });
+    Object.assign(retrievedEntity, patch);
+    return this.genericRepository.save(retrievedEntity);
   }
 
-  findAll({
+  getOne(id: number): Promise<T> {
+    return this.genericRepository.findOneBy({ id });
+  }
+
+  getAll({
     search = {},
     columns = undefined,
     limit = 100,
     sortField = undefined,
     sortOrder = 'ASC',
-  }) {
+  }): Promise<T[]> {
     const query = this.allQuery({ search, columns, sortField, sortOrder });
 
     query.limit(limit);
@@ -34,23 +42,31 @@ export abstract class BaseCrudService<T extends AuditBaseEntity> {
     return query.getMany();
   }
 
-  async paginate({
+  paginate({
     page,
     size,
     search,
     columns,
     sortField = undefined,
     sortOrder = 'ASC',
-  }) {
+  }): Promise<[T[], number]> {
     const query = this.allQuery({ search, columns, sortField, sortOrder });
+
+    query.addSelect(this.getEagerSelect());
+
+    this.getEagerRelation().forEach((er: string) => {
+      query.leftJoin(`${this.alias}.${er}`, er);
+    });
 
     query.skip(helper.getSkip(page, size));
 
     query.take(size);
 
-    const result = await query.getManyAndCount();
+    return query.getManyAndCount();
+  }
 
-    return result;
+  delete(id: number): Promise<any> {
+    return this.genericRepository.delete(id);
   }
 
   pageQuery({
@@ -76,7 +92,7 @@ export abstract class BaseCrudService<T extends AuditBaseEntity> {
     sortField = undefined,
     sortOrder = 'ASC',
   }: any): SelectQueryBuilder<T> {
-    const query = this.repository.createQueryBuilder(this.alias);
+    const query = this.genericRepository.createQueryBuilder(this.alias);
 
     let select = [`${this.alias}`];
 
@@ -98,5 +114,12 @@ export abstract class BaseCrudService<T extends AuditBaseEntity> {
     }
 
     return query;
+  }
+
+  getEagerRelation(): string[] {
+    return [];
+  }
+  getEagerSelect(): string[] {
+    return [];
   }
 }

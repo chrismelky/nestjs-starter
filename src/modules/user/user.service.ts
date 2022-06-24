@@ -1,26 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
-import { BaseCrudService } from '../../core/base-crud.service';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { BaseCrudService } from '../base/base-crud.service';
 
 @Injectable()
 export class UserService extends BaseCrudService<User> {
   alias = 'users';
   constructor(
     @InjectRepository(User)
-    public repository: Repository<User>,
+    private repository: Repository<User>,
   ) {
-    super();
+    super(repository);
   }
 
   /**
    * Override create method to add default password to new user
    */
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: User) {
     const data = {
       ...new User(),
       ...createUserDto,
@@ -30,31 +28,15 @@ export class UserService extends BaseCrudService<User> {
     return result;
   }
 
-  /**
-   * Override pagination method to add eager laoded user roles
-   */
-  async paginate({ page, size, search, columns, sortField, sortOrder }) {
-    const query = this.pageQuery({
-      page,
-      size,
-      search,
-      columns,
-      sortField,
-      sortOrder,
-    });
-
-    query.addSelect(['roles.id', 'roles.name']);
-    query.leftJoin('users.roles', 'roles');
-    const result = await query.getManyAndCount();
-    return result;
-  }
-
-  async delete(id: number) {
-    await this.repository.findOneByOrFail({ id });
-    return this.repository.delete(id);
-  }
-
   findOneByEmail(email: string): Promise<User | undefined> {
     return this.repository.findOne({ where: { email } });
+  }
+
+  getEagerRelation(): string[] {
+    return ['roles'];
+  }
+
+  getEagerSelect(): string[] {
+    return ['roles.id', 'roles.name'];
   }
 }

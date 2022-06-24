@@ -26,6 +26,7 @@ export class AuthorityGuard implements CanActivate {
       .replace('CONTROLLER', '');
     const methodAuthority = `${method}_${controller}`;
     const requiredRoles = [`MANAGE_${controller}`, methodAuthority];
+    console.log(methodAuthority);
 
     return true; //requiredRoles.some((authority) => user?.roles?.includes(authority));
   }

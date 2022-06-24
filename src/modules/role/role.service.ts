@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseCrudService } from '../../core/base-crud.service';
+import { BaseCrudService } from '../base/base-crud.service';
 import { Repository } from 'typeorm';
 import { Role } from './role.entity';
 
@@ -12,41 +12,13 @@ export class RoleService extends BaseCrudService<Role> {
     @InjectRepository(Role)
     public repository: Repository<Role>,
   ) {
-    super();
+    super(repository);
   }
 
-  /**
-   * Override pagination to add eager loaded authorities
-   */
-  async paginate({
-    page,
-    size,
-    search,
-    columns,
-    sortField = undefined,
-    sortOrder = 'ASC',
-  }: any) {
-    const query = this.pageQuery({
-      page,
-      size,
-      search,
-      columns,
-      sortField,
-      sortOrder,
-    });
-    query.addSelect(['authorities.id', 'authorities.name']);
-    query.leftJoin('roles.authorities', 'authorities');
-    const result = await query.getManyAndCount();
-    return result;
+  getEagerSelect(): string[] {
+    return ['authorities.id', 'authorities.name'];
   }
-
-  async findOne(id: number) {
-    const role = await this.repository.findOneBy({ id });
-    return role;
-  }
-
-  async remove(id: number) {
-    await this.repository.findOneByOrFail({ id });
-    return this.repository.delete(id);
+  getEagerRelation(): string[] {
+    return ['authorities'];
   }
 }

@@ -1,5 +1,5 @@
 import { IsNotEmpty } from 'class-validator';
-import { AuditBaseEntity } from '../../core/audit-base.entity';
+import { AuditBaseEntity } from '../base/audit-base.entity';
 import { Column, Entity } from 'typeorm';
 
 @Entity('authorities')
