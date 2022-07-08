@@ -26,7 +26,9 @@ export class User extends AuditBaseEntity {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
-  @ManyToMany(() => Role)
+  @ManyToMany(() => Role, {
+    cascade: true,
+  })
   @JoinTable({
     name: 'user_roles',
     joinColumn: { name: 'user_id', referencedColumnName: 'id' },
